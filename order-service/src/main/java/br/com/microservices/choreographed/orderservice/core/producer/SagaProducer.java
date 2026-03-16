@@ -11,17 +11,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SagaProducer {
 
-    @Value("${spring.kafka.topic.start-saga}")
-    private String startSagaTopic;
+    @Value("${spring.kafka.topic.product-validation-start}")
+    private String productValidationStartSagaTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     public void sendEvent(String payload) {
         try {
-            log.info("Sending event to topic {} with data {}", startSagaTopic, payload);
-            kafkaTemplate.send(startSagaTopic, payload);
+            log.info("Sending event to topic {} with data {}", productValidationStartSagaTopic, payload);
+            kafkaTemplate.send(productValidationStartSagaTopic, payload);
         } catch (Exception ex) {
-            log.error("Error trying to send data to topic {} with data {}", startSagaTopic, payload, ex);
+            log.error("Error trying to send data to topic {} with data {}", productValidationStartSagaTopic, payload, ex);
         }
     }
 }
