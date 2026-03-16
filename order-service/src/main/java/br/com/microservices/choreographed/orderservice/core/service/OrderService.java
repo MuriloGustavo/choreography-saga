@@ -1,6 +1,5 @@
 package br.com.microservices.choreographed.orderservice.core.service;
 
-import br.com.microservices.choreographed.orderservice.core.document.Event;
 import br.com.microservices.choreographed.orderservice.core.document.Order;
 import br.com.microservices.choreographed.orderservice.core.dto.OrderRequest;
 import br.com.microservices.choreographed.orderservice.core.producer.SagaProducer;
@@ -32,19 +31,8 @@ public class OrderService {
                 .transactionId(generateTransactionId())
                 .build();
         repository.save(order);
-        producer.sendEvent(jsonUtil.toJson(createPayload(order)));
+        producer.sendEvent(jsonUtil.toJson(eventService.createEvent(order)));
         return order;
-    }
-
-    private Event createPayload(Order order) {
-        return eventService.save(
-                Event.builder()
-                    .orderId(order.getId())
-                    .transactionId(order.getTransactionId())
-                    .payload(order)
-                    .createdAt(LocalDateTime.now())
-                    .build()
-        );
     }
 
     private static String generateTransactionId() {
