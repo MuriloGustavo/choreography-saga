@@ -6,9 +6,8 @@ import br.com.microservices.choreographed.paymentservice.core.dto.History;
 import br.com.microservices.choreographed.paymentservice.core.dto.OrderProducts;
 import br.com.microservices.choreographed.paymentservice.core.enums.EPaymentStatus;
 import br.com.microservices.choreographed.paymentservice.core.model.Payment;
-import br.com.microservices.choreographed.paymentservice.core.producer.KafkaProducer;
 import br.com.microservices.choreographed.paymentservice.core.repository.PaymentRepository;
-import br.com.microservices.choreographed.paymentservice.core.utils.JsonUtil;
+import br.com.microservices.choreographed.paymentservice.core.saga.SagaExecutionController;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,9 +25,8 @@ public class PaymentService {
     public static final Double REDUCE_SUM_VALUE = 0.0;
     public static final Double MIN_VALUE_AMOUNT = 0.1;
 
-    private final JsonUtil jsonUtil;
-    private final KafkaProducer producer;
     private final PaymentRepository paymentRepository;
+    private final SagaExecutionController sagaExecutionController;
 
     public void realizedPayment(Event event) {
         try {
@@ -42,7 +40,7 @@ public class PaymentService {
             log.error("Error trying to make payment: ", ex);
             handleFailCurrentNotExecuted(event, ex.getMessage());
         }
-        producer.sendEvent(jsonUtil.toJson(event), "");
+        sagaExecutionController.handleSaga(event);
     }
 
     private void checkCurrentValidation(Event event) {
@@ -121,7 +119,7 @@ public class PaymentService {
         } catch (Exception ex) {
             addHistory(event, "Rollback not executed for payment: ".concat(ex.getMessage()));
         }
-        producer.sendEvent(jsonUtil.toJson(event), "");
+        sagaExecutionController.handleSaga(event);
     }
 
     private void changePaymentStatusToRefund(Event event) {

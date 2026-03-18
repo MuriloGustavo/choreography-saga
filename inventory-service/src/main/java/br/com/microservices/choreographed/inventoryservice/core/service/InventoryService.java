@@ -7,10 +7,9 @@ import br.com.microservices.choreographed.inventoryservice.core.dto.Order;
 import br.com.microservices.choreographed.inventoryservice.core.dto.OrderProducts;
 import br.com.microservices.choreographed.inventoryservice.core.model.Inventory;
 import br.com.microservices.choreographed.inventoryservice.core.model.OrderInventory;
-import br.com.microservices.choreographed.inventoryservice.core.producer.KafkaProducer;
 import br.com.microservices.choreographed.inventoryservice.core.repository.InventoryRepository;
 import br.com.microservices.choreographed.inventoryservice.core.repository.OrderInventoryRepository;
-import br.com.microservices.choreographed.inventoryservice.core.utils.JsonUtil;
+import br.com.microservices.choreographed.inventoryservice.core.saga.SagaExecutionController;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,10 +25,9 @@ public class InventoryService {
 
     private static final String CURRENT_SOURCE = "INVENTORY_SERVICE";
 
-    private final JsonUtil jsonUtil;
-    private final KafkaProducer producer;
     private final InventoryRepository inventoryRepository;
     private final OrderInventoryRepository orderInventoryRepository;
+    private final SagaExecutionController sagaExecutionController;
 
     public void updateInventory(Event event) {
         try {
@@ -41,7 +39,7 @@ public class InventoryService {
             log.error("Error trying to update inventory: ", ex);
             handleFailCurrentNotExecuted(event, ex.getMessage());
         }
-        producer.sendEvent(jsonUtil.toJson(event), "");
+        sagaExecutionController.handleSaga(event);
     }
 
     private void checkCurrentValidation(Event event) {
@@ -108,7 +106,7 @@ public class InventoryService {
         } catch (Exception ex) {
             addHistory(event, "Rollback not executed for inventory: ".concat(ex.getMessage()));
         }
-        producer.sendEvent(jsonUtil.toJson(event), "");
+        sagaExecutionController.handleSaga(event);
     }
 
     private void returnInventoryToPreviousValues(Event event) {
